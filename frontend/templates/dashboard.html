@@ -1,0 +1,491 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Smart Finance Automator{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-lg-2 d-none d-lg-block">
+            <div class="sidebar bg-light rounded p-3 mb-4">
+                <h6 class="text-white text-uppercase mb-3">Quick Actions</h6>
+                <div class="list-group list-group-flush">
+                    <a href="{{ url_for('upload_data') }}" class="list-group-item list-group-item-action border-0">
+                        <i class="fas fa-upload me-2"></i>Upload Data
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action border-0">
+                        <i class="fas fa-plus me-2"></i>Add Transaction
+                    </a>
+                    <a href="{{ url_for('savings') }}" class="list-group-item list-group-item-action border-0">
+                        <i class="fas fa-piggy-bank me-2"></i>Savings Tips
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action border-0">
+                        <i class="fas fa-cog me-2"></i>Settings
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-lg-10">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">Dashboard</h1>
+                    <p class="text-white">Welcome back, {{ current_user.username }}! Here's your financial overview.</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-success" onclick="syncGmail()">
+                        <i class="fas fa-envelope me-2"></i>Sync Gmail
+                    </button>
+                    <button class="btn btn-outline-warning" onclick="forceRefreshGmail()">
+                        <i class="fas fa-sync-alt me-2"></i>Force Refresh Gmail
+                    </button>
+                    <button class="btn btn-outline-primary" onclick="refreshDashboard()">
+                        <i class="fas fa-sync-alt me-2"></i>Refresh
+                    </button>
+                    <a href="{{ url_for('upload_data') }}" class="btn btn-primary">
+                        <i class="fas fa-upload me-2"></i>Upload Data
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Summary Cards -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-6 col-xl-3">
+                    <div class="card bg-primary text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="fs-6 fw-semibold">Total Spending</div>
+                                    <div class="fs-3 fw-bold">₹{{ "%.2f"|format(total_spending) }}</div>
+                                    <div class="fs-7 opacity-75">This month</div>
+                                </div>
+                                <div class="text-end">
+                                    <i class="fas fa-credit-card fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-xl-3">
+                    <div class="card bg-success text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="fs-6 fw-semibold">Transactions</div>
+                                    <div class="fs-3 fw-bold">{{ recent_transactions|length }}</div>
+                                    <div class="fs-7 opacity-75">Recent entries</div>
+                                </div>
+                                <div class="text-end">
+                                    <i class="fas fa-list fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-xl-3">
+                    <div class="card bg-info text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="fs-6 fw-semibold">Categories</div>
+                                    <div class="fs-3 fw-bold">{{ category_spending|length }}</div>
+                                    <div class="fs-7 opacity-75">Active categories</div>
+                                </div>
+                                <div class="text-end">
+                                    <i class="fas fa-tags fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-xl-3">
+                    <div class="card bg-warning text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="fs-6 fw-semibold">Avg Daily</div>
+                                    <div class="fs-3 fw-bold">₹{{ "%.0f"|format(total_spending/30 if total_spending > 0 else 0) }}</div>
+                                    <div class="fs-7 opacity-75">Daily average</div>
+                                </div>
+                                <div class="text-end">
+                                    <i class="fas fa-calendar-day fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Charts Row -->
+            <div class="row g-4 mb-4">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-chart-line me-2"></i>Spending Trends
+                            </h5>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-primary active" data-period="6days">6 Days</button>
+                                <button type="button" class="btn btn-outline-primary" data-period="30days">30 Days</button>
+                                <button type="button" class="btn btn-outline-primary" data-period="6months">6 Months</button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="spendingTrendsChart" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-chart-pie me-2"></i>Category Breakdown
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="categoryChart" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Transactions and Quick Stats -->
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-history me-2"></i>Recent Transactions
+                            </h5>
+                            <a href="{{ url_for('analytics') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                        </div>
+                        <div class="card-body p-0">
+                            {% if recent_transactions %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th class="text-dark">Date</th>
+                                                <th class="text-dark">Description</th>
+                                                <th class="text-dark">Category</th>
+                                                <th class="text-dark">Amount</th>
+                                                <th class="text-dark">Type</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for transaction in recent_transactions %}
+                                            <tr style="background-color: white;">
+                                                <td class="text-dark small">{{ transaction.date.strftime('%d %b') }}</td>
+                                                <td>
+                                                    <div class="fw-medium text-dark">{{ transaction.description[:40] }}{% if transaction.description|length > 40 %}...{% endif %}</div>
+                                                    {% if transaction.merchant %}
+                                                        <div class="text-muted small">{{ transaction.merchant }}</div>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-secondary text-white">
+                                                        {{ transaction.category.name if transaction.category else 'Other' }}
+                                                    </span>
+                                                </td>
+                                                <td class="fw-bold {% if transaction.transaction_type == 'debit' %}text-danger{% else %}text-success{% endif %}">
+                                                    {% if transaction.transaction_type == 'debit' %}-{% else %}+{% endif %}₹{{ "%.2f"|format(transaction.amount) }}
+                                                </td>
+                                                <td>
+                                                    {% if transaction.transaction_type == 'debit' %}
+                                                        <i class="fas fa-arrow-down text-danger"></i>
+                                                    {% else %}
+                                                        <i class="fas fa-arrow-up text-success"></i>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-inbox fa-3x text-white mb-3"></i>
+                                    <h5 class="text-white">No transactions yet</h5>
+                                    <p class="text-white">Upload your bank data to get started with transaction tracking.</p>
+                                    <a href="{{ url_for('upload_data') }}" class="btn btn-primary">
+                                        <i class="fas fa-upload me-2"></i>Upload Data
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <!-- Top Categories -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-trophy me-2"></i>Top Spending Categories
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            {% if category_spending %}
+                                {% for category, amount in category_spending[:5] %}
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-truncate">{{ category }}</span>
+                                    <span class="fw-bold text-white">₹{{ "%.0f"|format(amount) }}</span>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="text-white text-center">No category data available</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Tips -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-lightbulb me-2"></i>Quick Tips
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Tip:</strong> Upload your SMS data regularly to keep your spending analysis up to date.
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <a href="{{ url_for('savings') }}" class="btn btn-success btn-sm">
+                                    <i class="fas fa-piggy-bank me-2"></i>View Savings Tips
+                                </a>
+                                <a href="{{ url_for('analytics') }}" class="btn btn-info btn-sm">
+                                    <i class="fas fa-chart-bar me-2"></i>Detailed Analytics
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Initialize charts
+let spendingChart, categoryChart;
+let currentPeriod = '6days'; // Default period
+
+// Load dashboard data
+function loadDashboardData(period = '6days') {
+    currentPeriod = period;
+    
+    // Load spending trends with period parameter
+    fetch(`/api/spending-chart?period=${period}`)
+        .then(response => response.json())
+        .then(data => {
+            updateSpendingChart(data);
+        })
+        .catch(error => console.error('Error loading spending data:', error));
+    
+    // Load category breakdown
+    fetch('/api/category-chart')
+        .then(response => response.json())
+        .then(data => {
+            updateCategoryChart(data);
+        })
+        .catch(error => console.error('Error loading category data:', error));
+}
+
+function updateSpendingChart(data) {
+    const ctx = document.getElementById('spendingTrendsChart').getContext('2d');
+    
+    if (spendingChart) {
+        spendingChart.destroy();
+    }
+    
+    spendingChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.months || [],
+            datasets: [{
+                label: 'Spending Amount',
+                data: data.amounts || [],
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '₹' + value.toFixed(0);
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function updateCategoryChart(data) {
+    const ctx = document.getElementById('categoryChart').getContext('2d');
+    
+    if (categoryChart) {
+        categoryChart.destroy();
+    }
+    
+    categoryChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: data.categories || [],
+            datasets: [{
+                data: data.amounts || [],
+                backgroundColor: [
+                    '#FF6384',
+                    '#36A2EB',
+                    '#FFCE56',
+                    '#4BC0C0',
+                    '#9966FF',
+                    '#FF9F40',
+                    '#FF6384',
+                    '#C9CBCF'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        boxWidth: 12,
+                        padding: 15
+                    }
+                }
+            }
+        }
+    });
+}
+
+function syncGmail() {
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Syncing...';
+    button.disabled = true;
+    
+    fetch('/api/gmail/sync', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            days_back: 30
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert('Error: ' + data.error);
+        } else {
+            alert(data.message);
+            refreshDashboard();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to sync Gmail');
+    })
+    .finally(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+
+function forceRefreshGmail() {
+    if (!confirm('This will remove all existing Gmail transactions and re-sync from scratch. Continue?')) {
+        return;
+    }
+    
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Refreshing...';
+    button.disabled = true;
+    
+    fetch('/api/gmail/force_refresh', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            days_back: 60
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert('Error: ' + data.error);
+        } else {
+            alert(data.message);
+            refreshDashboard();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to force refresh Gmail');
+    })
+    .finally(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+
+function refreshDashboard() {
+    location.reload();
+}
+
+// Period selector for spending chart
+document.querySelectorAll('[data-period]').forEach(button => {
+    button.addEventListener('click', function() {
+        // Remove active class from all buttons
+        document.querySelectorAll('[data-period]').forEach(btn => btn.classList.remove('active'));
+        
+        // Add active class to clicked button
+        this.classList.add('active');
+        
+        // Get the period from data attribute
+        const period = this.getAttribute('data-period');
+        
+        // Reload spending chart with new period
+        fetch(`/api/spending-chart?period=${period}`)
+            .then(response => response.json())
+            .then(data => {
+                updateSpendingChart(data);
+            })
+            .catch(error => console.error('Error loading spending data:', error));
+    });
+});
+
+// Load data when page is ready
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardData('6days'); // Load with default 6 days period
+});
+</script>
+{% endblock %}

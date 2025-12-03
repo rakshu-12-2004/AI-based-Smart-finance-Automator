@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Smart Finance Automator{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section bg-primary text-white py-5 mb-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">Smart Personal Finance Automation</h1>
+                <p class="lead mb-4">
+                    Automatically track, categorize, and analyze your expenses using AI-powered technology. 
+                    Get personalized savings recommendations and take control of your financial future.
+                </p>
+                <div class="d-flex gap-3">
+                    <a href="{{ url_for('register') }}" class="btn btn-light btn-lg">
+                        <i class="fas fa-rocket me-2"></i>Get Started
+                    </a>
+                    <a href="#features" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-play me-2"></i>Learn More
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="text-center">
+                    <i class="fas fa-chart-line display-1 mb-3"></i>
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <i class="fas fa-robot fa-3x mb-2"></i>
+                            <p class="small">AI Processing</p>
+                        </div>
+                        <div class="col-4">
+                            <i class="fas fa-chart-pie fa-3x mb-2"></i>
+                            <p class="small">Smart Analytics</p>
+                        </div>
+                        <div class="col-4">
+                            <i class="fas fa-piggy-bank fa-3x mb-2"></i>
+                            <p class="small">Savings Goals</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<section id="features" class="container py-5">
+    <div class="text-center mb-5">
+        <h2 class="display-5 fw-bold">Powerful Features</h2>
+        <p class="lead text-white">Everything you need to manage your finances intelligently</p>
+    </div>
+    
+    <div class="row g-4">
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                        <i class="fas fa-file-upload fa-lg"></i>
+                    </div>
+                    <h5 class="card-title">Automated Data Extraction</h5>
+                    <p class="card-text text-white">
+                        Upload bank SMS or email notifications and let our AI automatically extract transaction details.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                        <i class="fas fa-tags fa-lg"></i>
+                    </div>
+                    <h5 class="card-title">Intelligent Categorization</h5>
+                    <p class="card-text text-white">
+                        Transactions are automatically categorized using advanced NLP techniques for better insights.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon bg-info text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                        <i class="fas fa-chart-bar fa-lg"></i>
+                    </div>
+                    <h5 class="card-title">Interactive Dashboard</h5>
+                    <p class="card-text text-white">
+                        Visualize spending trends and patterns with beautiful, interactive charts and graphs.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon bg-warning text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                        <i class="fas fa-lightbulb fa-lg"></i>
+                    </div>
+                    <h5 class="card-title">Savings Insights</h5>
+                    <p class="card-text text-white">
+                        Get personalized recommendations to optimize your spending and increase your savings.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="bg-light py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold">How It Works</h2>
+            <p class="lead text-white">Simple steps to get started with smart finance automation</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="step-number bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 50px; height: 50px;">
+                        <span class="fw-bold">1</span>
+                    </div>
+                    <h5>Upload Transaction Data</h5>
+                    <p class="text-white">
+                        Upload your bank SMS messages or email notifications containing transaction information.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="step-number bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 50px; height: 50px;">
+                        <span class="fw-bold">2</span>
+                    </div>
+                    <h5>AI Processing</h5>
+                    <p class="text-white">
+                        Our NLP engine automatically extracts amounts, dates, merchants, and categorizes transactions.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="step-number bg-info text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 50px; height: 50px;">
+                        <span class="fw-bold">3</span>
+                    </div>
+                    <h5>Get Insights</h5>
+                    <p class="text-white">
+                        View detailed analytics, spending patterns, and receive personalized savings recommendations.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Statistics Section -->
+<section class="container py-5">
+    <div class="text-center mb-5">
+        <h2 class="display-5 fw-bold">Proven Results</h2>
+        <p class="lead text-white">See how users benefit from smart finance automation</p>
+    </div>
+    
+    <div class="row g-4 text-center">
+        <div class="col-md-3">
+            <div class="stat-item">
+                <h3 class="display-4 fw-bold text-white">25%</h3>
+                <p class="text-white">Average Savings Increase</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-item">
+                <h3 class="display-4 fw-bold text-white">95%</h3>
+                <p class="text-white">Transaction Accuracy</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-item">
+                <h3 class="display-4 fw-bold text-white">80%</h3>
+                <p class="text-white">Time Saved on Tracking</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-item">
+                <h3 class="display-4 fw-bold text-white">10+</h3>
+                <p class="text-white">Spending Categories</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="bg-primary text-white py-5">
+    <div class="container text-center">
+        <h2 class="display-5 fw-bold mb-4">Ready to Take Control of Your Finances?</h2>
+        <p class="lead mb-4">
+            Join thousands of users who are already saving money with intelligent finance automation.
+        </p>
+        <div class="d-flex justify-content-center gap-3">
+            <a href="{{ url_for('register') }}" class="btn btn-light btn-lg">
+                <i class="fas fa-user-plus me-2"></i>Create Free Account
+            </a>
+            <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg">
+                <i class="fas fa-sign-in-alt me-2"></i>Sign In
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Add smooth scrolling for anchor links
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        document.querySelector(this.getAttribute('href')).scrollIntoView({
+            behavior: 'smooth'
+        });
+    });
+});
+
+// Add animation on scroll
+const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+};
+
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add('animate-in');
+        }
+    });
+}, observerOptions);
+
+document.querySelectorAll('.card, .stat-item').forEach(el => {
+    observer.observe(el);
+});
+</script>
+{% endblock %}

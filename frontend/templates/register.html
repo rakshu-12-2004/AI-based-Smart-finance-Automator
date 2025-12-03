@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+
+{% block title %}Register - Smart Finance Automator{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow">
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-user-plus fa-3x text-white mb-3"></i>
+                        <h2 class="h4 fw-bold">Create Your Account</h2>
+                        <p class="text-white">Start your journey to smarter financial management</p>
+                    </div>
+                    
+                    <form method="POST" id="registerForm">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                <input type="text" class="form-control" id="username" name="username" required minlength="3">
+                            </div>
+                            <div class="form-text">Username must be at least 3 characters long</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" class="form-control" id="password" name="password" required minlength="6">
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="form-text">Password must be at least 6 characters long</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">Confirm Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
+                            </div>
+                            <div class="invalid-feedback" id="passwordMismatch" style="display: none;">
+                                Passwords do not match
+                            </div>
+                        </div>
+                        
+                        <!-- Password Strength Indicator -->
+                        <div class="mb-3">
+                            <div class="password-strength">
+                                <div class="password-strength-bar">
+                                    <div class="password-strength-fill" id="passwordStrengthFill"></div>
+                                </div>
+                                <div class="password-strength-text" id="passwordStrengthText">Enter a password</div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="termsAgreement" required>
+                            <label class="form-check-label" for="termsAgreement">
+                                I agree to the <a href="#" target="_blank">Terms of Service</a> and <a href="#" target="_blank">Privacy Policy</a>
+                            </label>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-user-plus me-2"></i>Create Account
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="text-center">
+                        <p class="text-white mb-0">Already have an account?</p>
+                        <a href="{{ url_for('login') }}" class="btn btn-link">Sign In</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Security Features -->
+            <div class="card mt-3">
+                <div class="card-body bg-light">
+                    <h6 class="card-title">
+                        <i class="fas fa-shield-alt me-2 text-white"></i>Your Data is Secure
+                    </h6>
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <i class="fas fa-lock fa-2x text-white mb-2"></i>
+                            <div class="small">Encrypted Storage</div>
+                        </div>
+                        <div class="col-4">
+                            <i class="fas fa-user-shield fa-2x text-white mb-2"></i>
+                            <div class="small">Privacy Protected</div>
+                        </div>
+                        <div class="col-4">
+                            <i class="fas fa-server fa-2x text-white mb-2"></i>
+                            <div class="small">Secure Servers</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Toggle password visibility
+document.getElementById('togglePassword').addEventListener('click', function() {
+    const passwordField = document.getElementById('password');
+    const toggleIcon = this.querySelector('i');
+    
+    if (passwordField.type === 'password') {
+        passwordField.type = 'text';
+        toggleIcon.classList.remove('fa-eye');
+        toggleIcon.classList.add('fa-eye-slash');
+    } else {
+        passwordField.type = 'password';
+        toggleIcon.classList.remove('fa-eye-slash');
+        toggleIcon.classList.add('fa-eye');
+    }
+});
+
+// Password strength checker
+document.getElementById('password').addEventListener('input', function() {
+    const password = this.value;
+    const strengthFill = document.getElementById('passwordStrengthFill');
+    const strengthText = document.getElementById('passwordStrengthText');
+    
+    let strength = 0;
+    let feedback = [];
+    
+    // Length check
+    if (password.length >= 8) strength += 25;
+    else if (password.length >= 6) strength += 15;
+    
+    // Uppercase check
+    if (/[A-Z]/.test(password)) strength += 25;
+    
+    // Lowercase check
+    if (/[a-z]/.test(password)) strength += 25;
+    
+    // Number check
+    if (/[0-9]/.test(password)) strength += 25;
+    
+    // Special character check
+    if (/[^A-Za-z0-9]/.test(password)) strength += 10;
+    
+    // Update visual indicator
+    strengthFill.style.width = Math.min(strength, 100) + '%';
+    
+    if (strength < 25) {
+        strengthFill.className = 'password-strength-fill bg-danger';
+        strengthText.textContent = 'Weak';
+        strengthText.className = 'password-strength-text text-white';
+    } else if (strength < 50) {
+        strengthFill.className = 'password-strength-fill bg-warning';
+        strengthText.textContent = 'Fair';
+        strengthText.className = 'password-strength-text text-white';
+    } else if (strength < 75) {
+        strengthFill.className = 'password-strength-fill bg-info';
+        strengthText.textContent = 'Good';
+        strengthText.className = 'password-strength-text text-white';
+    } else {
+        strengthFill.className = 'password-strength-fill bg-success';
+        strengthText.textContent = 'Strong';
+        strengthText.className = 'password-strength-text text-white';
+    }
+});
+
+// Confirm password validation
+document.getElementById('confirmPassword').addEventListener('input', function() {
+    const password = document.getElementById('password').value;
+    const confirmPassword = this.value;
+    const mismatchDiv = document.getElementById('passwordMismatch');
+    
+    if (confirmPassword && password !== confirmPassword) {
+        this.classList.add('is-invalid');
+        mismatchDiv.style.display = 'block';
+    } else {
+        this.classList.remove('is-invalid');
+        mismatchDiv.style.display = 'none';
+    }
+});
+
+// Form submission
+document.getElementById('registerForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    
+    // Validate passwords match
+    if (password !== confirmPassword) {
+        showAlert('Passwords do not match', 'danger');
+        return;
+    }
+    
+    const formData = new FormData(this);
+    const submitButton = this.querySelector('button[type="submit"]');
+    const originalText = submitButton.innerHTML;
+    
+    // Show loading state
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating Account...';
+    submitButton.disabled = true;
+    
+    fetch('{{ url_for("register") }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (response.ok) {
+            // Check if response is a redirect
+            if (response.redirected) {
+                window.location.href = response.url;
+                return;
+            }
+            // Otherwise redirect to dashboard
+            window.location.href = '{{ url_for("dashboard") }}';
+        } else {
+            return response.json();
+        }
+    })
+    .then(data => {
+        if (data && data.error) {
+            // Show error message
+            showAlert(data.error, 'danger');
+            
+            // Reset button
+            submitButton.innerHTML = originalText;
+            submitButton.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Registration error:', error);
+        showAlert('An error occurred during registration. Please try again.', 'danger');
+        
+        // Reset button
+        submitButton.innerHTML = originalText;
+        submitButton.disabled = false;
+    });
+});
+
+// Show alert function
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    const form = document.getElementById('registerForm');
+    form.parentNode.insertBefore(alertDiv, form);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+// Focus on username field when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('username').focus();
+});
+</script>
+
+<style>
+.password-strength {
+    margin-top: 0.5rem;
+}
+
+.password-strength-bar {
+    height: 4px;
+    background-color: #e9ecef;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 0.25rem;
+}
+
+.password-strength-fill {
+    height: 100%;
+    transition: width 0.3s ease, background-color 0.3s ease;
+    width: 0%;
+}
+
+.password-strength-text {
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+</style>
+{% endblock %}

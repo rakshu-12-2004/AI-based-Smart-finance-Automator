@@ -1,0 +1,694 @@
+{% extends "base.html" %}
+
+{% block title %}Gmail Integration Setup - Smart Finance Automator{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-envelope me-2"></i>
+                        Gmail API Integration Setup
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Data Source Mode Selector -->
+                    <div class="card border-primary mb-4">
+                        <div class="card-header bg-gradient-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-exchange-alt me-2"></i>
+                                Data Source Mode
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <p class="mb-2"><strong>Current Mode:</strong> <span id="currentMode" class="badge bg-info">Loading...</span></p>
+                                    <p class="text-white mb-0">Choose how you want to sync transaction data:</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="btn-group w-100" role="group">
+                                        <button type="button" class="btn btn-outline-primary" id="btnSampleMode" onclick="switchMode('sample')">
+                                            <i class="fas fa-database me-1"></i> Sample Data
+                                        </button>
+                                        <button type="button" class="btn btn-outline-success" id="btnGmailMode" onclick="switchMode('gmail')">
+                                            <i class="fas fa-envelope me-1"></i> Gmail Integration
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <div id="modeDescription" class="alert alert-light mb-0">
+                                    <small id="modeDescriptionText">Loading mode information...</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if available %}
+                        <!-- COMMENTED OUT: Benefits, Privacy & Security, Setup Instructions sections
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Automatic Email Processing:</strong> 
+                            Connect your Gmail account to automatically process bank notification emails.
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card border-success">
+                                    <div class="card-header bg-success text-white">
+                                        <h5 class="mb-0">✅ Benefits</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="list-unstyled mb-0">
+                                            <li><i class="fas fa-check text-white me-2"></i> Automatic transaction extraction</li>
+                                            <li><i class="fas fa-check text-white me-2"></i> Real-time email monitoring</li>
+                                            <li><i class="fas fa-check text-white me-2"></i> No manual file uploads</li>
+                                            <li><i class="fas fa-check text-white me-2"></i> Supports multiple banks</li>
+                                            <li><i class="fas fa-check text-white me-2"></i> Secure OAuth2 authentication</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-warning">
+                                    <div class="card-header bg-warning text-white">
+                                        <h5 class="mb-0">⚠️ Privacy & Security</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="list-unstyled mb-0">
+                                            <li><i class="fas fa-shield-alt text-white me-2"></i> Read-only access to Gmail</li>
+                                            <li><i class="fas fa-shield-alt text-white me-2"></i> Only bank notifications processed</li>
+                                            <li><i class="fas fa-shield-alt text-white me-2"></i> Data stored locally</li>
+                                            <li><i class="fas fa-shield-alt text-white me-2"></i> You can revoke access anytime</li>
+                                            <li><i class="fas fa-shield-alt text-white me-2"></i> Google OAuth2 security</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card border-info mb-4">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-cog me-2"></i>
+                                    Setup Instructions
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-12">
+                                        {% for key, instruction in instructions.items() %}
+                                            {% if key.startswith('step_') %}
+                                                <div class="d-flex align-items-start mb-3">
+                                                    <div class="badge bg-primary text-white rounded-pill me-3">
+                                                        {{ key.replace('step_', '') }}
+                                                    </div>
+                                                    <div class="flex-grow-1">
+                                                        <p class="mb-0">{{ instruction }}</p>
+                                                        {% if key == 'step_1' %}
+                                                            <small class="text-white">
+                                                                <a href="https://console.cloud.google.com/" target="_blank" class="text-decoration-none">
+                                                                    <i class="fas fa-external-link-alt me-1"></i>
+                                                                    Open Google Cloud Console
+                                                                </a>
+                                                            </small>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card border-secondary">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-file-alt me-2"></i>
+                                    Required Files
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group list-group-flush">
+                                    {% for file in instructions.required_files %}
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <code>{{ file }}</code>
+                                            <span class="badge bg-warning text-white">Required</span>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                        END OF COMMENTED SECTION -->
+
+                        <!-- Integration Status -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <i class="fas fa-signal me-2"></i>
+                                        Integration Status
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="statusResult" class="mb-3">
+                                            <!-- Status will be loaded here -->
+                                        </div>
+                                        <div class="d-grid gap-2">
+                                            <button class="btn btn-outline-primary w-100" onclick="checkGmailStatus()">
+                                                <i class="fas fa-sync me-2"></i>
+                                                Check Status
+                                            </button>
+                                            <button class="btn btn-success w-100" onclick="syncGmail()" id="syncButton" disabled>
+                                                <i class="fas fa-download me-2"></i>
+                                                Sync Emails
+                                            </button>
+                                            <button class="btn btn-info w-100 mt-2" onclick="debugGmail()" id="debugButton" disabled>
+                                                <i class="fas fa-bug me-2"></i>
+                                                Debug Emails
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <i class="fas fa-users me-2"></i>
+                                        Multi-Account Management
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="accountsList" class="mb-3">
+                                            <!-- Accounts will be loaded here -->
+                                        </div>
+                                        <div class="d-grid gap-2">
+                                            <div class="input-group mb-2">
+                                                <input type="text" class="form-control" id="newAccountName" placeholder="Account name (optional)">
+                                                <button class="btn btn-primary" onclick="addNewAccount()">
+                                                    <i class="fas fa-plus me-1"></i>Add Account
+                                                </button>
+                                            </div>
+                                            <button class="btn btn-info w-100" onclick="loadAccountsList()">
+                                                <i class="fas fa-list me-2"></i>
+                                                Refresh Accounts
+                                            </button>
+                                            <button class="btn btn-warning w-100" onclick="syncAllAccounts()" id="syncAllButton">
+                                                <i class="fas fa-sync-alt me-2"></i>
+                                                Sync All Accounts
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- COMMENTED OUT: Quick Install Commands section
+                        <div class="mt-4">
+                            <div class="card border-dark">
+                                <div class="card-header bg-dark text-white">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-terminal me-2"></i>
+                                        Quick Install Commands
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <p class="mb-2">Run these commands in your terminal:</p>
+                                    <div class="bg-dark text-light p-3 rounded">
+                                        <code class="text-light">
+                                            # Install Gmail API dependencies<br>
+                                            pip install google-api-python-client google-auth-httplib2 google-auth-oauthlib<br><br>
+                                            # Restart the application<br>
+                                            python app.py
+                                        </code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        END OF COMMENTED SECTION -->
+
+                    {% else %}
+                        <!-- COMMENTED OUT: Installation not available warning
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Gmail Integration Not Available:</strong> 
+                            Please install the required dependencies to enable Gmail integration.
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h5>Installation Required</h5>
+                                <p>Run this command to install Gmail API dependencies:</p>
+                                <div class="bg-dark text-light p-3 rounded">
+                                    <code class="text-light">
+                                        pip install google-api-python-client google-auth-httplib2 google-auth-oauthlib
+                                    </code>
+                                </div>
+                                <p class="mt-3 text-white">After installation, restart the application.</p>
+                            </div>
+                        </div>
+                        END OF COMMENTED SECTION -->
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function checkGmailStatus() {
+    try {
+        const response = await fetch('/api/gmail/status');
+        const data = await response.json();
+        
+        const statusDiv = document.getElementById('statusResult');
+        const syncButton = document.getElementById('syncButton');
+        
+        if (data.authenticated) {
+            statusDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Connected!</strong> Gmail integration is ready.
+                </div>
+            `;
+            syncButton.disabled = false;
+            document.getElementById('debugButton').disabled = false;
+        } else {
+            statusDiv.innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Not Connected:</strong> ${data.message}
+                </div>
+            `;
+            syncButton.disabled = true;
+            document.getElementById('debugButton').disabled = true;
+        }
+    } catch (error) {
+        document.getElementById('statusResult').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-times-circle me-2"></i>
+                <strong>Error:</strong> ${error.message}
+            </div>
+        `;
+    }
+}
+
+async function syncGmail() {
+    const syncButton = document.getElementById('syncButton');
+    const originalText = syncButton.innerHTML;
+    
+    syncButton.disabled = true;
+    syncButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Syncing...';
+    
+    try {
+        const response = await fetch('/api/gmail/sync', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ days_back: 7 })
+        });
+        
+        const data = await response.json();
+        
+        const statusDiv = document.getElementById('statusResult');
+        
+        if (response.ok) {
+            statusDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Success!</strong> ${data.message}
+                </div>
+            `;
+        } else {
+            statusDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-times-circle me-2"></i>
+                    <strong>Error:</strong> ${data.error}
+                </div>
+            `;
+        }
+    } catch (error) {
+        document.getElementById('statusResult').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-times-circle me-2"></i>
+                <strong>Sync Failed:</strong> ${error.message}
+            </div>
+        `;
+    }
+    
+    syncButton.disabled = false;
+    syncButton.innerHTML = originalText;
+}
+
+// Multi-account functions
+async function loadAccountsList() {
+    try {
+        const response = await fetch('/api/gmail/accounts');
+        const data = await response.json();
+        
+        const accountsDiv = document.getElementById('accountsList');
+        
+        if (response.ok && data.accounts && data.accounts.length > 0) {
+            let accountsHtml = '<div class="list-group">';
+            data.accounts.forEach(account => {
+                accountsHtml += `
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-envelope me-2"></i>${account}</span>
+                        <button class="btn btn-sm btn-outline-primary" onclick="switchToAccount('${account}')">
+                            Switch
+                        </button>
+                    </div>
+                `;
+            });
+            accountsHtml += '</div>';
+            accountsDiv.innerHTML = accountsHtml;
+        } else {
+            accountsDiv.innerHTML = `
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    No additional accounts configured.
+                </div>
+            `;
+        }
+    } catch (error) {
+        document.getElementById('accountsList').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-times-circle me-2"></i>
+                Failed to load accounts: ${error.message}
+            </div>
+        `;
+    }
+}
+
+async function addNewAccount() {
+    const accountNameInput = document.getElementById('newAccountName');
+    const accountName = accountNameInput.value.trim() || undefined;
+    
+    try {
+        const response = await fetch('/api/gmail/accounts/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ account_name: accountName })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            accountNameInput.value = '';
+            loadAccountsList(); // Refresh the list
+            
+            const statusDiv = document.getElementById('accountsList');
+            const successAlert = document.createElement('div');
+            successAlert.className = 'alert alert-success alert-dismissible fade show mt-2';
+            successAlert.innerHTML = `
+                <i class="fas fa-check-circle me-2"></i>
+                ${data.message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            statusDiv.appendChild(successAlert);
+            
+            // Auto-dismiss after 3 seconds
+            setTimeout(() => {
+                successAlert.remove();
+            }, 3000);
+        } else {
+            throw new Error(data.error);
+        }
+    } catch (error) {
+        const statusDiv = document.getElementById('accountsList');
+        const errorAlert = document.createElement('div');
+        errorAlert.className = 'alert alert-danger alert-dismissible fade show mt-2';
+        errorAlert.innerHTML = `
+            <i class="fas fa-times-circle me-2"></i>
+            Failed to add account: ${error.message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        statusDiv.appendChild(errorAlert);
+    }
+}
+
+async function switchToAccount(accountName) {
+    try {
+        const response = await fetch(`/api/gmail/accounts/${accountName}/switch`, {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            checkGmailStatus(); // Refresh status for new account
+            
+            const statusDiv = document.getElementById('statusResult');
+            const successAlert = document.createElement('div');
+            successAlert.className = 'alert alert-info alert-dismissible fade show mt-2';
+            successAlert.innerHTML = `
+                <i class="fas fa-user-check me-2"></i>
+                ${data.message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            statusDiv.appendChild(successAlert);
+            
+            setTimeout(() => {
+                successAlert.remove();
+            }, 3000);
+        } else {
+            throw new Error(data.error);
+        }
+    } catch (error) {
+        const statusDiv = document.getElementById('accountsList');
+        const errorAlert = document.createElement('div');
+        errorAlert.className = 'alert alert-danger alert-dismissible fade show mt-2';
+        errorAlert.innerHTML = `
+            <i class="fas fa-times-circle me-2"></i>
+            Failed to switch account: ${error.message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        statusDiv.appendChild(errorAlert);
+    }
+}
+
+async function syncAllAccounts() {
+    const syncAllButton = document.getElementById('syncAllButton');
+    const originalText = syncAllButton.innerHTML;
+    
+    syncAllButton.disabled = true;
+    syncAllButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Syncing All...';
+    
+    try {
+        const response = await fetch('/api/gmail/sync-all', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ days_back: 7 })
+        });
+        
+        const data = await response.json();
+        
+        const statusDiv = document.getElementById('statusResult');
+        
+        if (response.ok) {
+            statusDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Multi-Account Sync Complete!</strong><br>
+                    ${data.message}<br>
+                    <small>Accounts processed: ${data.accounts.join(', ')}</small>
+                </div>
+            `;
+        } else {
+            statusDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-times-circle me-2"></i>
+                    <strong>Multi-Account Sync Failed:</strong> ${data.error}
+                </div>
+            `;
+        }
+    } catch (error) {
+        document.getElementById('statusResult').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-times-circle me-2"></i>
+                <strong>Multi-Account Sync Failed:</strong> ${error.message}
+            </div>
+        `;
+    }
+    
+    syncAllButton.disabled = false;
+    syncAllButton.innerHTML = originalText;
+}
+
+async function debugGmail() {
+    const debugButton = document.getElementById('debugButton');
+    const originalText = debugButton.innerHTML;
+    
+    debugButton.disabled = true;
+    debugButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Debugging...';
+    
+    try {
+        const response = await fetch('/api/gmail/debug', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ days_back: 7, max_results: 20 })
+        });
+        
+        const data = await response.json();
+        
+        const statusDiv = document.getElementById('statusResult');
+        
+        if (response.ok) {
+            let emailDetails = '<div class="mt-3"><h6>Email Debug Results:</h6>';
+            emailDetails += `<p><strong>Total emails found:</strong> ${data.total_emails}</p>`;
+            
+            if (data.emails && data.emails.length > 0) {
+                emailDetails += '<div class="accordion" id="emailAccordion">';
+                
+                data.emails.forEach((email, index) => {
+                    const isTransaction = email.is_transaction ? '✅' : '❌';
+                    emailDetails += `
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading${index}">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                        data-bs-target="#collapse${index}" aria-expanded="false" aria-controls="collapse${index}">
+                                    ${isTransaction} ${email.subject} - ${email.sender}
+                                </button>
+                            </h2>
+                            <div id="collapse${index}" class="accordion-collapse collapse" aria-labelledby="heading${index}" 
+                                 data-bs-parent="#emailAccordion">
+                                <div class="accordion-body">
+                                    <p><strong>Sender:</strong> ${email.sender}</p>
+                                    <p><strong>Date:</strong> ${email.date}</p>
+                                    <p><strong>Transaction Email:</strong> ${email.is_transaction ? 'Yes' : 'No'}</p>
+                                    <p><strong>Body Preview:</strong></p>
+                                    <div class="bg-light p-2 rounded">
+                                        <small>${email.body_preview}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                emailDetails += '</div>';
+            } else {
+                emailDetails += '<p class="text-white">No emails found in the specified time period.</p>';
+            }
+            
+            emailDetails += '</div>';
+            
+            statusDiv.innerHTML = `
+                <div class="alert alert-info">
+                    <i class="fas fa-bug me-2"></i>
+                    <strong>Debug Complete!</strong> ${data.message}
+                    ${emailDetails}
+                </div>
+            `;
+        } else {
+            statusDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-times-circle me-2"></i>
+                    <strong>Debug Failed:</strong> ${data.error}
+                </div>
+            `;
+        }
+    } catch (error) {
+        document.getElementById('statusResult').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-times-circle me-2"></i>
+                <strong>Debug Failed:</strong> ${error.message}
+            </div>
+        `;
+    }
+    
+    debugButton.disabled = false;
+    debugButton.innerHTML = originalText;
+}
+
+// Mode Switching Functions
+async function loadCurrentMode() {
+    try {
+        const response = await fetch('/api/data-source/mode');
+        const data = await response.json();
+        
+        document.getElementById('currentMode').textContent = data.mode.toUpperCase();
+        document.getElementById('currentMode').className = `badge bg-${data.mode === 'sample' ? 'info' : 'success'}`;
+        
+        // Update button states
+        if (data.mode === 'sample') {
+            document.getElementById('btnSampleMode').classList.add('active');
+            document.getElementById('btnSampleMode').classList.remove('btn-outline-primary');
+            document.getElementById('btnSampleMode').classList.add('btn-primary');
+            document.getElementById('btnGmailMode').classList.remove('active', 'btn-success');
+            document.getElementById('btnGmailMode').classList.add('btn-outline-success');
+        } else {
+            document.getElementById('btnGmailMode').classList.add('active');
+            document.getElementById('btnGmailMode').classList.remove('btn-outline-success');
+            document.getElementById('btnGmailMode').classList.add('btn-success');
+            document.getElementById('btnSampleMode').classList.remove('active', 'btn-primary');
+            document.getElementById('btnSampleMode').classList.add('btn-outline-primary');
+        }
+        
+        // Update description
+        const descriptions = {
+            'sample': '📊 Sample Data Mode: Using demo transactions for testing. No Gmail authentication required.',
+            'gmail': '📧 Gmail Mode: Reading real transaction emails from your Gmail account. Requires authentication.'
+        };
+        
+        document.getElementById('modeDescriptionText').textContent = descriptions[data.mode] || 'Unknown mode';
+        
+    } catch (error) {
+        console.error('Error loading mode:', error);
+        document.getElementById('currentMode').textContent = 'ERROR';
+        document.getElementById('currentMode').className = 'badge bg-danger';
+    }
+}
+
+async function switchMode(newMode) {
+    try {
+        const response = await fetch('/api/data-source/mode', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ mode: newMode })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            // Show success message
+            alert(`✅ Switched to ${newMode.toUpperCase()} mode!\n\n${data.description}`);
+            
+            // Reload current mode display
+            loadCurrentMode();
+            
+            // Refresh Gmail status if switching to Gmail
+            if (newMode === 'gmail') {
+                checkGmailStatus();
+            }
+        } else {
+            alert(`❌ Failed to switch mode: ${data.error}`);
+        }
+    } catch (error) {
+        alert(`❌ Error switching mode: ${error.message}`);
+    }
+}
+
+// Check status on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Always load current mode
+    loadCurrentMode();
+    
+    {% if available %}
+        checkGmailStatus();
+        loadAccountsList();
+    {% endif %}
+});
+</script>
+{% endblock %}

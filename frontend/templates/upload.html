@@ -1,0 +1,455 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Data - Smart Finance Automator{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <!-- Page Header -->
+            <div class="text-center mb-5">
+                <h1 class="h3 fw-bold">Upload Transaction Data</h1>
+                <p class="text-white">Upload your bank SMS messages or email notifications to automatically extract and categorize transactions</p>
+            </div>
+            
+            <!-- Upload Form Card -->
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <form id="uploadForm" enctype="multipart/form-data">
+                        <div class="mb-4">
+                            <label for="fileInput" class="form-label fw-bold">
+                                <i class="fas fa-file-upload me-2"></i>Select File
+                            </label>
+                            
+                            <!-- File Drop Zone -->
+                            <div class="drop-zone" id="dropZone">
+                                <div class="drop-zone-content">
+                                    <i class="fas fa-cloud-upload-alt fa-3x text-white mb-3"></i>
+                                    <h5>Drag & Drop Files Here</h5>
+                                    <p class="text-white">or click to browse files</p>
+                                    <input type="file" class="form-control" id="fileInput" name="file" accept=".txt,.csv,.json" style="display: none;">
+                                    <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('fileInput').click()">
+                                        <i class="fas fa-folder-open me-2"></i>Browse Files
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="form-text">
+                                Supported formats: .txt, .csv, .json | Maximum file size: 16MB
+                            </div>
+                        </div>
+                        
+                        <!-- File Preview -->
+                        <div id="filePreview" style="display: none;" class="mb-4">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-file-alt fa-2x text-white me-3"></i>
+                                            <div>
+                                                <div class="fw-bold" id="fileName"></div>
+                                                <div class="text-white small" id="fileSize"></div>
+                                            </div>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearFile()">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Processing Options -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-cogs me-2"></i>Processing Options
+                            </label>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="autoCategories" checked>
+                                        <label class="form-check-label" for="autoCategories">
+                                            Auto-categorize transactions
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="skipDuplicates" checked>
+                                        <label class="form-check-label" for="skipDuplicates">
+                                            Skip duplicate transactions
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="extractDates" checked>
+                                        <label class="form-check-label" for="extractDates">
+                                            Auto-extract dates
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="detectMerchants" checked>
+                                        <label class="form-check-label" for="detectMerchants">
+                                            Detect merchant names
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn" disabled>
+                                <i class="fas fa-magic me-2"></i>Process Transactions
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Processing Status -->
+            <div id="processingStatus" style="display: none;" class="card mt-4">
+                <div class="card-body text-center">
+                    <div class="spinner-border text-white mb-3" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <h5>Processing Your Data</h5>
+                    <p class="text-white">Our AI is analyzing and extracting transaction information...</p>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Results -->
+            <div id="processingResults" style="display: none;" class="card mt-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-check-circle text-white me-2"></i>Processing Complete
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="result-stat">
+                                <div class="h3 text-white" id="processedCount">0</div>
+                                <div class="text-white">Transactions Processed</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="result-stat">
+                                <div class="h3 text-white" id="categorizedCount">0</div>
+                                <div class="text-white">Auto-Categorized</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="result-stat">
+                                <div class="h3 text-white" id="merchantsFound">0</div>
+                                <div class="text-white">Merchants Detected</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="result-stat">
+                                <div class="h3 text-white" id="confidenceScore">0%</div>
+                                <div class="text-white">Avg Confidence</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
+                            <i class="fas fa-tachometer-alt me-2"></i>View Dashboard
+                        </a>
+                        <button class="btn btn-success" onclick="location.reload()">
+                            <i class="fas fa-plus me-2"></i>Upload More Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- COMMENTED OUT: How to Prepare Your Data section
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>How to Prepare Your Data
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="fw-bold">SMS Messages</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-white me-2"></i>Copy bank transaction SMS messages</li>
+                                <li><i class="fas fa-check text-white me-2"></i>Paste into a text file (.txt)</li>
+                                <li><i class="fas fa-check text-white me-2"></i>One transaction per line</li>
+                                <li><i class="fas fa-check text-white me-2"></i>Include amount, date, and merchant info</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6 class="fw-bold">Email Notifications</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-white me-2"></i>Export bank email alerts</li>
+                                <li><i class="fas fa-check text-white me-2"></i>Save as .txt or .csv format</li>
+                                <li><i class="fas fa-check text-white me-2"></i>Include full email content</li>
+                                <li><i class="fas fa-check text-white me-2"></i>Multiple emails can be combined</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>Tip:</strong> The more information you include (dates, amounts, merchant names), the better our AI can categorize your transactions.
+                    </div>
+                </div>
+            </div>
+            END OF COMMENTED SECTION -->
+            
+            <!-- Sample Data -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-file-code me-2"></i>Sample Data Format
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <pre class="bg-light p-3 rounded"><code>Your A/c X1234 debited Rs.500.00 on 15/10/2024 for payment at AMAZON INDIA. Bal: Rs.25,000.50
+
+Rs 1,250.75 debited from Card x5678 at STARBUCKS COFFEE on 14-Oct-2024. Available bal: Rs 45,000.00
+
+Amount Rs.2,000.00 credited to your account X9876 on 13/10/2024 from SALARY CREDIT. Ref: TXN123456</code></pre>
+                    
+                    <button class="btn btn-sm btn-outline-secondary" onclick="downloadSample()">
+                        <i class="fas fa-download me-2"></i>Download Sample File
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// File handling
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const filePreview = document.getElementById('filePreview');
+const submitBtn = document.getElementById('submitBtn');
+
+// Drag and drop handlers
+dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('drag-over');
+});
+
+dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('drag-over');
+});
+
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        handleFile(files[0]);
+    }
+});
+
+dropZone.addEventListener('click', () => {
+    fileInput.click();
+});
+
+fileInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+        handleFile(e.target.files[0]);
+    }
+});
+
+function handleFile(file) {
+    // Validate file type
+    const allowedTypes = ['text/plain', 'text/csv', 'application/json'];
+    if (!allowedTypes.includes(file.type) && !file.name.endsWith('.txt') && !file.name.endsWith('.csv')) {
+        showAlert('Please select a valid file type (.txt, .csv, .json)', 'warning');
+        return;
+    }
+    
+    // Validate file size (16MB limit)
+    if (file.size > 16 * 1024 * 1024) {
+        showAlert('File size must be less than 16MB', 'warning');
+        return;
+    }
+    
+    // Show file preview
+    document.getElementById('fileName').textContent = file.name;
+    document.getElementById('fileSize').textContent = formatFileSize(file.size);
+    filePreview.style.display = 'block';
+    submitBtn.disabled = false;
+    
+    // Store file in input
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(file);
+    fileInput.files = dataTransfer.files;
+}
+
+function clearFile() {
+    fileInput.value = '';
+    filePreview.style.display = 'none';
+    submitBtn.disabled = true;
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Form submission
+document.getElementById('uploadForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    if (!fileInput.files.length) {
+        showAlert('Please select a file to upload', 'warning');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+    
+    // Add processing options
+    formData.append('auto_categories', document.getElementById('autoCategories').checked);
+    formData.append('skip_duplicates', document.getElementById('skipDuplicates').checked);
+    formData.append('extract_dates', document.getElementById('extractDates').checked);
+    formData.append('detect_merchants', document.getElementById('detectMerchants').checked);
+    
+    // Show processing status
+    document.getElementById('processingStatus').style.display = 'block';
+    this.style.display = 'none';
+    
+    // Simulate progress
+    simulateProgress();
+    
+    fetch('/upload', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('processingStatus').style.display = 'none';
+        
+        if (data.error) {
+            showAlert(data.error, 'danger');
+            document.getElementById('uploadForm').style.display = 'block';
+        } else {
+            // Show results
+            showResults(data);
+        }
+    })
+    .catch(error => {
+        console.error('Upload error:', error);
+        document.getElementById('processingStatus').style.display = 'none';
+        document.getElementById('uploadForm').style.display = 'block';
+        showAlert('An error occurred while processing your file. Please try again.', 'danger');
+    });
+});
+
+function simulateProgress() {
+    const progressBar = document.querySelector('.progress-bar');
+    let width = 0;
+    
+    const interval = setInterval(() => {
+        width += Math.random() * 15;
+        if (width >= 95) {
+            width = 95;
+            clearInterval(interval);
+        }
+        progressBar.style.width = width + '%';
+    }, 500);
+}
+
+function showResults(data) {
+    // Parse success message to extract counts
+    const message = data.success || '';
+    const processedMatch = message.match(/(\d+) transactions/);
+    const processedCount = processedMatch ? processedMatch[1] : '0';
+    
+    // Update result statistics
+    document.getElementById('processedCount').textContent = processedCount;
+    document.getElementById('categorizedCount').textContent = Math.floor(processedCount * 0.8); // Estimate
+    document.getElementById('merchantsFound').textContent = Math.floor(processedCount * 0.6); // Estimate
+    document.getElementById('confidenceScore').textContent = '85%'; // Default confidence
+    
+    document.getElementById('processingResults').style.display = 'block';
+    
+    showAlert(data.success, 'success');
+}
+
+function downloadSample() {
+    const sampleData = `Your A/c X1234 debited Rs.500.00 on 15/10/2024 for payment at AMAZON INDIA. Bal: Rs.25,000.50
+Rs 1,250.75 debited from Card x5678 at STARBUCKS COFFEE on 14-Oct-2024. Available bal: Rs 45,000.00
+Amount Rs.2,000.00 credited to your account X9876 on 13/10/2024 from SALARY CREDIT. Ref: TXN123456
+Your card ending 4321 used for Rs.750.00 at UBER TRIP on 12/10/2024 19:45. Current balance: Rs.18,500.25
+Rs.3,200.00 debited from A/c X1234 for ELECTRICITY BILL on 11/10/2024. Balance: Rs.22,300.25`;
+
+    const blob = new Blob([sampleData], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'sample_transactions.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    const container = document.querySelector('.container > .row > .col-lg-8');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+</script>
+
+<style>
+.drop-zone {
+    border: 2px dashed #dee2e6;
+    border-radius: 0.375rem;
+    padding: 3rem 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.drop-zone:hover, .drop-zone.drag-over {
+    border-color: #0d6efd;
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+.drop-zone-content {
+    pointer-events: none;
+}
+
+.result-stat {
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+</style>
+{% endblock %}

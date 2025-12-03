@@ -1,0 +1,576 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics - Smart Finance Automator{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">Advanced Analytics</h1>
+                    <p class="text-white">Deep insights into your spending patterns and financial behavior</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-calendar me-2"></i>Last 6 Months
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#">Last 30 Days</a></li>
+                            <li><a class="dropdown-item" href="#">Last 3 Months</a></li>
+                            <li><a class="dropdown-item" href="#">Last 6 Months</a></li>
+                            <li><a class="dropdown-item" href="#">Last Year</a></li>
+                        </ul>
+                    </div>
+                    <button class="btn btn-primary">
+                        <i class="fas fa-download me-2"></i>Export Report
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Summary Cards -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-6 col-xl-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <div class="text-white mb-2">
+                                <i class="fas fa-chart-line fa-2x"></i>
+                            </div>
+                            <h3 class="card-title text-white">₹{{ "{:,.0f}".format(total_spending) }}</h3>
+                            <p class="card-text text-white">Total Spending</p>
+                            <small class="text-white">
+                                {% if spending_change < 0 %}
+                                    <i class="fas fa-arrow-down me-1"></i>{{ "{:.1f}".format(abs(spending_change)) }}% vs last month
+                                {% else %}
+                                    <i class="fas fa-arrow-up me-1"></i>{{ "{:.1f}".format(spending_change) }}% vs last month
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-xl-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <div class="text-white mb-2">
+                                <i class="fas fa-piggy-bank fa-2x"></i>
+                            </div>
+                            <h3 class="card-title text-white">₹{{ "{:,.0f}".format(savings_this_month) }}</h3>
+                            <p class="card-text text-white">Savings This Month</p>
+                            <small class="text-white">
+                                {% if savings_this_month > 0 %}
+                                    <i class="fas fa-check-circle me-1"></i>Positive balance
+                                {% else %}
+                                    <i class="fas fa-exclamation-triangle me-1"></i>Negative balance
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-xl-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <div class="text-white mb-2">
+                                <i class="fas fa-tags fa-2x"></i>
+                            </div>
+                            <h3 class="card-title text-white">{{ active_categories }}</h3>
+                            <p class="card-text text-white">Active Categories</p>
+                            <small class="text-white">
+                                {% if category_spending %}
+                                    Most used: {{ category_spending[0][0] }}
+                                {% else %}
+                                    No categories yet
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-xl-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <div class="text-white mb-2">
+                                <i class="fas fa-receipt fa-2x"></i>
+                            </div>
+                            <h3 class="card-title text-white">{{ total_transactions }}</h3>
+                            <p class="card-text text-white">Total Transactions</p>
+                            <small class="text-white">
+                                Avg: ₹{{ "{:,.0f}".format(avg_transaction) }} per transaction
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Charts Row -->
+            <div class="row g-4 mb-4">
+                <!-- Spending Trends -->
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-chart-area me-2"></i>Spending Trends Over Time
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="advancedSpendingChart" height="400"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Category Distribution -->
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-chart-pie me-2"></i>Category Distribution
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="advancedCategoryChart" height="400"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Detailed Analysis Row -->
+            <div class="row g-4 mb-4">
+                <!-- Monthly Comparison -->
+                <div class="col-lg-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-chart-bar me-2"></i>Monthly Comparison
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="monthlyComparisonChart" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Insights and Patterns -->
+            <div class="row g-4">
+                <!-- Spending Patterns -->
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-brain me-2"></i>AI-Generated Insights
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="insights-list">
+                                <div class="insight-item mb-4 p-3 border-start border-primary border-4 bg-light">
+                                    <div class="d-flex align-items-start">
+                                        <div class="insight-icon me-3">
+                                            <i class="fas fa-lightbulb text-white fa-lg"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="fw-bold mb-1">Weekend Spending Spike</h6>
+                                            <p class="mb-2">Your spending increases by 40% on weekends, primarily on dining and entertainment. Consider setting weekend budgets to control expenses.</p>
+                                            <small class="text-white">Impact: High | Confidence: 89%</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="insight-item mb-4 p-3 border-start border-success border-4 bg-light">
+                                    <div class="d-flex align-items-start">
+                                        <div class="insight-icon me-3">
+                                            <i class="fas fa-chart-line text-white fa-lg"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="fw-bold mb-1">Improving Savings Trend</h6>
+                                            <p class="mb-2">Your monthly savings have increased by 15% over the last 3 months. You're on track to meet your annual savings goal.</p>
+                                            <small class="text-white">Impact: Positive | Confidence: 95%</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="insight-item mb-4 p-3 border-start border-warning border-4 bg-light">
+                                    <div class="d-flex align-items-start">
+                                        <div class="insight-icon me-3">
+                                            <i class="fas fa-exclamation-triangle text-white fa-lg"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="fw-bold mb-1">Subscription Optimization Opportunity</h6>
+                                            <p class="mb-2">You have 5 active subscriptions totaling ₹2,500/month. Consider reviewing Netflix and Spotify usage - potential savings of ₹800/month.</p>
+                                            <small class="text-white">Impact: Medium | Confidence: 76%</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="insight-item p-3 border-start border-info border-4 bg-light">
+                                    <div class="d-flex align-items-start">
+                                        <div class="insight-icon me-3">
+                                            <i class="fas fa-clock text-white fa-lg"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="fw-bold mb-1">Peak Spending Hours</h6>
+                                            <p class="mb-2">Most transactions occur between 6-8 PM (32% of daily spending). This coincides with your commute home and dinner time.</p>
+                                            <small class="text-white">Impact: Low | Confidence: 92%</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="col-lg-4">
+                    <!-- Budget Status -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-bullseye me-2"></i>Budget Status
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="budget-item mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="fw-medium">Groceries</span>
+                                    <span class="text-white">₹3,200 / ₹5,000</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-success" style="width: 64%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="budget-item mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="fw-medium">Dining</span>
+                                    <span class="text-white">₹4,800 / ₹6,000</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-warning" style="width: 80%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="budget-item">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="fw-medium">Entertainment</span>
+                                    <span class="text-white">₹3,500 / ₹3,000</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-danger" style="width: 100%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-zap me-2"></i>Quick Actions
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <a href="{{ url_for('savings') }}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-piggy-bank me-2"></i>View Savings Tips
+                                </a>
+                                <button class="btn btn-success btn-sm">
+                                    <i class="fas fa-plus me-2"></i>Add Manual Transaction
+                                </button>
+                                <button class="btn btn-info btn-sm">
+                                    <i class="fas fa-cog me-2"></i>Manage Categories
+                                </button>
+                                <button class="btn btn-warning btn-sm">
+                                    <i class="fas fa-bell me-2"></i>Set Budget Alerts
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Initialize analytics charts with real data
+document.addEventListener('DOMContentLoaded', function() {
+    initializeAnalyticsCharts();
+    loadInsights();
+});
+
+async function initializeAnalyticsCharts() {
+    // Load spending trend data for 6 months
+    try {
+        const spendingResponse = await fetch('/api/spending-chart?period=6months');
+        const spendingData = await spendingResponse.json();
+        
+        const categoryResponse = await fetch('/api/category-chart');
+        const categoryData = await categoryResponse.json();
+        
+        console.log('Spending data:', spendingData);
+        console.log('Category data:', categoryData);
+        
+        // Advanced Spending Chart
+        const spendingCtx = document.getElementById('advancedSpendingChart');
+        const labels = spendingData.labels || spendingData.months || [];
+        const amounts = spendingData.amounts || [];
+        
+        if (spendingCtx && labels.length > 0) {
+            new Chart(spendingCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Spending',
+                        data: amounts,
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: '#ffffff'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Spending: ₹' + context.parsed.y.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#ffffff',
+                                callback: function(value) {
+                                    return '₹' + value.toLocaleString();
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#ffffff'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Advanced Category Chart
+        const categoryCtx = document.getElementById('advancedCategoryChart');
+        if (categoryCtx && categoryData.categories && categoryData.categories.length > 0) {
+            new Chart(categoryCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: categoryData.categories,
+                    datasets: [{
+                        data: categoryData.amounts,
+                        backgroundColor: [
+                            '#28a745', '#dc3545', '#ffc107', '#17a2b8', 
+                            '#6f42c1', '#fd7e14', '#20c997', '#6c757d'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#000000'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#ffffff',
+                                padding: 15
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return label + ': ₹' + value.toLocaleString() + ' (' + percentage + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Monthly Comparison Chart - fetch last 3 months separately
+        const monthlyResponse = await fetch('/api/spending-chart?period=6months');
+        const monthlyData = await monthlyResponse.json();
+        const monthLabels = monthlyData.labels || monthlyData.months || [];
+        const monthAmounts = monthlyData.amounts || [];
+        
+        const monthlyCtx = document.getElementById('monthlyComparisonChart');
+        if (monthlyCtx && monthLabels.length > 0) {
+            // Take last 3 months
+            const last3Months = monthLabels.slice(-3);
+            const last3Amounts = monthAmounts.slice(-3);
+            
+            new Chart(monthlyCtx, {
+                type: 'bar',
+                data: {
+                    labels: last3Months,
+                    datasets: [{
+                        label: 'Monthly Spending',
+                        data: last3Amounts,
+                        backgroundColor: '#007bff',
+                        borderColor: '#0056b3',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: '#ffffff'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Spending: ₹' + context.parsed.y.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#ffffff',
+                                callback: function(value) {
+                                    return '₹' + value.toLocaleString();
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#ffffff'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+        } else {
+            console.warn('Monthly comparison chart: No data available');
+        }
+        
+    } catch (error) {
+        console.error('Error loading chart data:', error);
+        console.error('Error details:', error.message);
+    }
+}
+
+async function loadInsights() {
+    const insightsContainer = document.querySelector('.insights-list');
+    
+    try {
+        // Show loading state
+        if (insightsContainer) {
+            insightsContainer.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x text-white"></i><p class="mt-2 text-white">Loading insights...</p></div>';
+        }
+        
+        const response = await fetch('/api/analytics/insights');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Insights data:', data);
+        
+        if (insightsContainer) {
+            if (data.insights && data.insights.length > 0) {
+                const borderColors = {
+                    'warning': 'border-warning',
+                    'success': 'border-success',
+                    'info': 'border-info',
+                    'danger': 'border-danger'
+                };
+                
+                const iconColors = {
+                    'warning': 'text-warning',
+                    'success': 'text-success',
+                    'info': 'text-info',
+                    'danger': 'text-danger'
+                };
+                
+                insightsContainer.innerHTML = data.insights.map(insight => `
+                    <div class="insight-item mb-4 p-3 border-start ${borderColors[insight.type] || 'border-primary'} border-4 bg-dark bg-opacity-75 rounded">
+                        <div class="d-flex align-items-start">
+                            <div class="insight-icon me-3">
+                                <i class="fas ${insight.icon} ${iconColors[insight.type] || 'text-primary'} fa-lg"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="fw-bold mb-1 text-white">${insight.title}</h6>
+                                <p class="mb-2 text-white-50">${insight.description}</p>
+                                <small class="text-white-50">Impact: <span class="text-white">${insight.impact}</span> | Confidence: <span class="text-white">${insight.confidence}%</span></small>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                insightsContainer.innerHTML = `
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        No insights available yet. Add more transactions to receive personalized insights!
+                    </div>
+                `;
+            }
+        }
+    } catch (error) {
+        console.error('Error loading insights:', error);
+        console.error('Error details:', error.message, error.stack);
+        if (insightsContainer) {
+            insightsContainer.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Failed to load insights: ${error.message}. Please check the browser console for details and try refreshing the page.
+                </div>
+            `;
+        }
+    }
+}
+
+// Export report functionality
+document.querySelector('.btn-primary')?.addEventListener('click', function() {
+    alert('Export functionality coming soon! This will generate a PDF report of your analytics.');
+});
+</script>
+{% endblock %}
