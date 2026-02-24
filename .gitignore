@@ -46,6 +46,12 @@ uploads/
 credentials.json
 *.log
 
+# Environment variables — NEVER commit real secrets
+.env
+.env.local
+.env.*.local
+# Keep .env.template tracked (it has only safe placeholder values)
+
 # Database
 *.db
 *.sqlite
