@@ -1,0 +1,108 @@
+name: PR Check
+
+on:
+  pull_request:
+    branches:
+      - main
+      - Development
+
+jobs:
+  lint-and-test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install flake8 pytest
+
+      - name: Lint with flake8
+        run: |
+          # Stop the build if there are Python syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics \
+            --exclude=.git,__pycache__,.venv,venv
+          # Warn on style issues but don't fail the build
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=120 \
+            --statistics --exclude=.git,__pycache__,.venv,venv
+
+      - name: Check for syntax errors
+        run: |
+          python -m py_compile app.py config.py
+          python -m py_compile backend/services/nlp_processor.py
+          python -m py_compile backend/services/savings_analyzer.py
+          python -m py_compile backend/services/gmail_service.py
+          python -m py_compile backend/models/database_models.py
+          echo "All files passed syntax check."
+
+      - name: Run tests
+        env:
+          FLASK_ENV: testing
+          SECRET_KEY: ci-test-secret-key
+        run: |
+          if [ -d "tests" ]; then
+            pytest tests/ -v --tb=short
+          else
+            echo "No tests directory found — skipping pytest."
+          fi
+
+  security-check:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install bandit
+        run: pip install bandit
+
+      - name: Run bandit security scan
+        run: |
+          bandit -r . \
+            --exclude ./.git,./__pycache__,./.venv,./venv \
+            -ll -ii \
+            || true
+
+  dependency-check:
+    name: Dependency Vulnerability Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install pip-audit
+        run: pip install pip-audit
+
+      - name: Audit dependencies for known CVEs
+        run: |
+          pip-audit -r requirements.txt --ignore-vuln PYSEC-2022-42969 \
+            || echo "::warning::Vulnerabilities found — review before merging."
